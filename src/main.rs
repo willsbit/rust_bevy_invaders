@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 use bevy::prelude::*;
+use crate::components::{Movable, Player, Velocity};
 use crate::player::PlayerPlugin;
 
 mod components;
@@ -15,6 +16,8 @@ const SPRITE_SCALE: f32 = 0.5;
 // region:  --- Game constants
 const TIME_STEP: f32 = 1.0 / 60.0;
 const BASE_SPEED: f32 = 500.0;
+const PLAYER_LASER_SPRITE: &str = "laser_a_01.png";
+const PLAYER_LASER_SIZE: (f32, f32) = (9.0, 54.0);
 // endregion:  --- Game constants
 
 // region: ---- Resources
@@ -24,7 +27,8 @@ pub struct WinSize {
 }
 
 struct GameTextures {
-    player: Handle<Image>
+    player: Handle<Image>,
+    player_laser: Handle<Image>
 }
 // endregion: ---- Resources
 
@@ -40,6 +44,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(PlayerPlugin)
         .add_startup_system(setup_system)
+        .add_system(movable_system)
         .run()
 }
 
@@ -64,7 +69,33 @@ fn setup_system(mut commands: Commands,
     /// Add GameTextures resource
     let game_textures = GameTextures {
         player: asset_server.load(PLAYER_SPRITE),
+        player_laser: asset_server.load(PLAYER_LASER_SPRITE)
     };
 
     commands.insert_resource(game_textures);
+}
+
+
+fn movable_system(
+    mut commands: Commands,
+    win_size: Res<WinSize>,
+    mut query: Query<(Entity, &Velocity, &mut Transform, &Movable)>
+) {
+    for (entity, velocity, mut transform, movable) in query.iter_mut() {
+        let translation = &mut transform.translation;
+        translation.x += velocity.x * TIME_STEP * BASE_SPEED;
+        translation.y += velocity.y * TIME_STEP * BASE_SPEED;
+
+        if movable.auto_despawn {
+            /// Despawn components when they go beyond window bounds
+            const MARGIN: f32 = 200.0;
+            if translation.y > win_size.h /2.0 + MARGIN
+                || translation.y < -win_size.h /2.0 - MARGIN
+                || translation.x > win_size.w /2.0 + MARGIN
+                || translation.x < -win_size.w /2.0 - MARGIN
+            {
+                commands.entity(entity).despawn();
+            }
+        }
+    }
 }
