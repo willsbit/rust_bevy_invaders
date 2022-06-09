@@ -1,12 +1,32 @@
 #![allow(unused)]
 
 use bevy::prelude::*;
+use crate::player::PlayerPlugin;
+
+mod components;
+mod player;
 
 // region: ---- Asset constants
 const PLAYER_SPRITE: &str = "player_a_01.png";
 const PLAYER_SIZE: (f32, f32) = (144.0, 75.0);
 const SPRITE_SCALE: f32 = 0.5;
 // endregion: ---- Asset constants
+
+// region:  --- Game constants
+const TIME_STEP: f32 = 1.0 / 60.0;
+const BASE_SPEED: f32 = 500.0;
+// endregion:  --- Game constants
+
+// region: ---- Resources
+pub struct WinSize {
+    pub w: f32,
+    pub h: f32,
+}
+
+struct GameTextures {
+    player: Handle<Image>
+}
+// endregion: ---- Resources
 
 fn main() {
     App::new()
@@ -18,10 +38,10 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
+        .add_plugin(PlayerPlugin)
         .add_startup_system(setup_system)
         .run()
 }
-
 
 fn setup_system(mut commands: Commands,
                 asset_server: Res<AssetServer>,
@@ -37,16 +57,14 @@ fn setup_system(mut commands: Commands,
     // position window
     window.set_position(IVec2::new(500, 500));
 
-    // Add a rectangle
-    let bottom = -win_h/2.0;
+    /// Add WinSize resource
+    let win_size = WinSize{w: win_w, h: win_h};
+    commands.insert_resource(win_size);
 
-    commands.spawn_bundle(SpriteBundle {
-        texture: asset_server.load(PLAYER_SPRITE),
-        transform: Transform {
-            translation: Vec3::new(0.0, bottom + PLAYER_SIZE.1/2.0 * SPRITE_SCALE + 5.0, 10.0),
-            scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.0),
-            ..Default::default()
-        },
-        ..Default::default()
-    });
+    /// Add GameTextures resource
+    let game_textures = GameTextures {
+        player: asset_server.load(PLAYER_SPRITE),
+    };
+
+    commands.insert_resource(game_textures);
 }
