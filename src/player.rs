@@ -1,4 +1,3 @@
-use std::thread::spawn;
 use bevy::prelude::*;
 use crate::{BASE_SPEED, GameTextures, PLAYER_SIZE, PLAYER_SPRITE, SPRITE_SCALE, TIME_STEP, WinSize};
 use crate::components::{Movable, Player, Velocity};
