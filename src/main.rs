@@ -2,22 +2,31 @@
 
 use bevy::prelude::*;
 use crate::components::{Movable, Player, Velocity};
+use crate::enemy::EnemyPlugin;
 use crate::player::PlayerPlugin;
 
 mod components;
+mod enemy
 mod player;
 
 // region: ---- Asset constants
-const PLAYER_SPRITE: &str = "player_a_01.png";
+const PLAYER_SPRITE: &str = "enemy_a_01.png";
 const PLAYER_SIZE: (f32, f32) = (144.0, 75.0);
+const PLAYER_LASER_SPRITE: &str = "laser_a_01.png";
+const PLAYER_LASER_SIZE: (f32, f32) = (9.0, 54.0);
+
+const ENEMY_SPRITE: &str = "player_a_01.png";
+const ENEMY_SIZE: (f32, f32) = (144.0, 75.0);
+const ENEMY_LASER_SPRITE: &str = "laser_b_01.png";
+const ENEMY_LASER_SIZE: (f32, f32) = (17.0, 55.0);
+
 const SPRITE_SCALE: f32 = 0.5;
 // endregion: ---- Asset constants
 
 // region:  --- Game constants
 const TIME_STEP: f32 = 1.0 / 60.0;
 const BASE_SPEED: f32 = 500.0;
-const PLAYER_LASER_SPRITE: &str = "laser_a_01.png";
-const PLAYER_LASER_SIZE: (f32, f32) = (9.0, 54.0);
+
 // endregion:  --- Game constants
 
 // region: ---- Resources
@@ -28,7 +37,9 @@ pub struct WinSize {
 
 struct GameTextures {
     player: Handle<Image>,
-    player_laser: Handle<Image>
+    player_laser: Handle<Image>,
+    enemy: Handle<Image>,
+    enemy_laser: Handle<Image>
 }
 // endregion: ---- Resources
 
@@ -43,6 +54,7 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(PlayerPlugin)
+        .add_plugin(EnemyPlugin)
         .add_startup_system(setup_system)
         .add_system(movable_system)
         .run()
@@ -69,7 +81,9 @@ fn setup_system(mut commands: Commands,
     /// Add GameTextures resource
     let game_textures = GameTextures {
         player: asset_server.load(PLAYER_SPRITE),
-        player_laser: asset_server.load(PLAYER_LASER_SPRITE)
+        player_laser: asset_server.load(PLAYER_LASER_SPRITE),
+        enemy: asset_server.load(ENEMY_SPRITE),
+        enemy_laser: asset_server.load(ENEMY_LASER_SPRITE_LASER_SPRITE)
     };
 
     commands.insert_resource(game_textures);
