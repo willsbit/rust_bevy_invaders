@@ -120,7 +120,7 @@ fn enemy_movement_system(
         let dx = x_org - x_dst;
         let dy = y_org - y_dst;
 
-        let distance = (dx^2 + dy^2).sqrt();
+        let distance = (dx * dx + dy * dy).sqrt();
         let distance_ratio = if distance != 0.0 {max_distance / distance}
                             else {0.0};
 
@@ -130,7 +130,7 @@ fn enemy_movement_system(
                     else {x.min(x_dst)};
 
         let y = y_org - dy * distance_ratio;
-        let y = if dy > 0.0 { y.may(y_dst) }
+        let y = if dy > 0.0 { y.max(y_dst) }
                      else {y.min(y_dst)};
 
         let translation = &mut transform.translation;

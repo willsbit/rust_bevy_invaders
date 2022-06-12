@@ -266,7 +266,7 @@ fn enemy_laser_hit_player_system(
     mut commands: Commands,
     mut player_state: ResMut<PlayerState>,
     time: Res<Time>,
-    laser_query: Query<(Entity, &Transform, &SpriteSize), (With<Laser>, With<FromEnemy>)>
+    laser_query: Query<(Entity, &Transform, &SpriteSize), (With<Laser>, With<FromEnemy>)>,
     player_query: Query<(Entity, &Transform, &SpriteSize), (With<Player>)>
 ) {
     if let Ok((player_entity, player_tf, player_size)) = player_query.get_single() {
