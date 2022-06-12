@@ -35,6 +35,7 @@ const PLAYER_LASER_SIZE: (f32, f32) = (9.0, 54.0);
 const ENEMY_SIZE: (f32, f32) = (144.0, 75.0);
 const ENEMY_LASER_SIZE: (f32, f32) = (17.0, 55.0);
 
+const PLAYER_RESPAWN_DELAY: f64 = 2.0;
 const ENEMY_MAX: u32 = 2;
 // endregion:  --- Game constants
 
@@ -53,6 +54,33 @@ struct GameTextures {
 }
 
 struct EnemyCount(u32);
+
+struct PlayerState {
+    on: bool, // alive
+    last_shot: f64, // -1 if not shot
+}
+
+impl Default for PlayerState {
+    fn default() -> Self {
+        Self {
+            on: false,
+            last_shot: -1.0,
+        }
+    }
+}
+
+impl PlayerState {
+    pub fn shot(&mut self, time: f64) {
+        self.on = false;
+        self.last_shot = time;
+    }
+
+    pub fn spawned(&mut self) {
+        self.on = true;
+        self.last_shot = -1.0;
+    }
+}
+
 // endregion: ---- Resources
 
 fn main() {
@@ -236,6 +264,8 @@ fn explosion_animation_system(
 
 fn enemy_laser_hit_player_system(
     mut commands: Commands,
+    mut player_state: ResMut<PlayerState>,
+    time: Res<Time>,
     laser_query: Query<(Entity, &Transform, &SpriteSize), (With<Laser>, With<FromEnemy>)>
     player_query: Query<(Entity, &Transform, &SpriteSize), (With<Player>)>
 ) {
@@ -257,6 +287,8 @@ fn enemy_laser_hit_player_system(
             if let Some(_) = collision {
                 // remove the player
                 commands.entity(player_entity).despawn();
+                // update the player state
+                player_state.shot(time.seconds_since_startup());
 
                 // remove the laser
                 commands.entity(laser_entity).despawn();
