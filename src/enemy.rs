@@ -1,7 +1,8 @@
+use std::cmp::max;
 use std::f32::consts::PI;
 use bevy::core::FixedTimestep;
 use bevy::ecs::schedule::ShouldRun;
-use crate::{ENEMY_LASER_SIZE, ENEMY_MAX, ENEMY_SIZE, ENEMY_SPRITE, EnemyCount, GameTextures, Laser, Movable, SPRITE_SCALE, Velocity, WinSize};
+use crate::{BASE_SPEED, ENEMY_LASER_SIZE, ENEMY_MAX, ENEMY_SIZE, ENEMY_SPRITE, EnemyCount, GameTextures, Laser, Movable, SPRITE_SCALE, TIME_STEP, Velocity, WinSize};
 use bevy::prelude::*;
 use bevy::utils::tracing::Instrument;
 use rand::{Rng, thread_rng};
@@ -17,7 +18,8 @@ impl Plugin for EnemyPlugin {
         )
             .add_system_set(SystemSet::new()
                 .with_run_criteria(enemy_fire_criteria)
-                .with_system(enemy_fire_system));
+                .with_system(enemy_fire_system)
+            ).add_system(enemy_movement_system);
     }
 }
 
@@ -85,5 +87,53 @@ fn enemy_fire_criteria() -> ShouldRun {
         ShouldRun::Yes
     } else {
         ShouldRun::No
+    }
+}
+
+fn enemy_movement_system(
+    time: Res<Time>,
+    mut query: Query<&mut Transform, With<Enemy>>
+) {
+
+    let now = time.seconds_since_startup() as f32;
+
+    for mut transform in query.iter_mut() {
+        // current position
+        let (x_org, y_org) = (transform.translation.x, transform.translation.y);
+
+        // max distance
+        let max_distance = TIME_STEP * BASE_SPEED;
+
+        // fixtures
+        let dir: f32 = -1.0; // 1 for counter-clockwise, -1 for clockwise
+        let (x_pivot, y_pivot) = (0.0, 0.0);
+        let (x_radius, y_radius) = (200.0, 130.0);
+
+        // compute next angle
+        let angle = dir * BASE_SPEED * TIME_STEP * now % 360.0 / PI;
+
+        // compute target x,y
+        let x_dst = x_radius * angle.cos() + x_pivot;
+        let y_dst = x_radius * angle.sin() + y_pivot;
+
+        // compute distance
+        let dx = x_org - x_dst;
+        let dy = y_org - y_dst;
+
+        let distance = (dx^2 + dy^2).sqrt();
+        let distance_ratio = if distance != 0.0 {max_distance / distance}
+                            else {0.0};
+
+        // compute next x,y
+        let x = x_org - dx * distance_ratio;
+        let x = if dx > 0.0 { x.max(x_dst) }
+                    else {x.min(x_dst)};
+
+        let y = y_org - dy * distance_ratio;
+        let y = if dy > 0.0 { y.may(y_dst) }
+                     else {y.min(y_dst)};
+
+        let translation = &mut transform.translation;
+        (translation.x, translation.y) = (x, y);
     }
 }
